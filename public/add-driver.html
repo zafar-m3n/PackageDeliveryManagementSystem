@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Driver</title>
+  </head>
+  <body>
+    <h1>Add a New Driver</h1>
+    <form action="/add-driver" method="POST">
+      <label for="driver_name">Name:</label>
+      <input type="text" id="driver_name" name="driver_name" required minlength="3" maxlength="20" /><br />
+
+      <label for="driver_department">Department:</label>
+      <select id="driver_department" name="driver_department" required>
+        <option value="food">Food</option>
+        <option value="furniture">Furniture</option>
+        <option value="electronics">Electronics</option></select
+      ><br />
+
+      <label for="driver_licence">Licence:</label>
+      <input
+        type="text"
+        id="driver_licence"
+        name="driver_licence"
+        required minlength="5" maxlength="5" pattern="[A-Za-z0-9]{5}"
+      /><br />
+
+      <label for="driver_isActive">Is Active:</label>
+      <input
+        type="checkbox"
+        id="driver_isActive"
+        name="driver_isActive"
+      /><br />
+
+      <button type="submit">Add Driver</button>
+    </form>
+  </body>
+</html>

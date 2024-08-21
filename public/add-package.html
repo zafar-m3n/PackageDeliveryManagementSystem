@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Package</title>
+  </head>
+  <body>
+    <h1>Add a New Package</h1>
+    <form action="/add-package" method="POST">
+      <label for="package_title">Title:</label>
+      <input type="text" id="package_title" name="package_title" required minlength="3" maxlength="15" pattern="[A-Za-z0-9]{3,15}"/><br />
+
+      <label for="package_weight">Weight:</label>
+      <input
+        type="number"
+        id="package_weight"
+        name="package_weight"
+        required min="1"
+      /><br />
+
+      <label for="package_destination">Destination:</label>
+      <input type="text" id="package_destination" name="package_destination" required minlength="5" maxlength="15" pattern="[A-Za-z0-9]{5,15}"/><br />
+
+      <label for="description">Description:</label>
+      <input type="text" id="description" name="description" minlength="0" maxlength="30"/><br />
+
+      <label for="isAllocated">Is Active:</label>
+      <input
+        type="checkbox"
+        id="isAllocated"
+        name="isAllocated"
+      /><br />
+
+      <label for="driver_id">Driver ID:</label>
+      <input type="text" id="driver_id" name="driver_id" required  minlength="10" maxlength="10" /><br />
+
+
+      <button type="submit">Add Package</button>
+    </form>
+  </body>
+</html>
