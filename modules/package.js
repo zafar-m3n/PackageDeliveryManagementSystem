@@ -4,6 +4,7 @@ class Package {
       package_weight,
       package_destination,
       description,
+      isAllocated,
       driver_id
     ) {
       this.package_id = this.generatePackageId();
@@ -12,7 +13,7 @@ class Package {
       this.package_destination = package_destination;
       this.description = description;
       this.createdAt = new Date();
-      this.isAllocated = false;
+      this.isAllocated = isAllocated;
       this.driver_id = driver_id;
     }
     generatePackageId() {

@@ -76,7 +76,7 @@ const postAddPackage = (req, res) => {
     package_weight,
     package_destination,
     description,
-    isAllocated === "yes",
+    isAllocated === "on",
     driver_id
   );
   packages.push(newPackage);
@@ -102,6 +102,7 @@ const getDeletePackage = (req, res) => {
 };
 
 const getListPackages = (req, res) => {
+  console.log(packages);
   res.sendFile(__dirname + "/public/packages-list.html");
 };
 
