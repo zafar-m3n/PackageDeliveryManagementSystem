@@ -11,15 +11,15 @@ let packages = [];
 app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/", (req, res) => {
+const getHome = (req, res) => {
   res.sendFile(__dirname + "/public/index.html");
-});
+};
 
-app.get("/34082115/Durgka/add-driver", (req, res) => {
+const getAddDriver = (req, res) => {
   res.sendFile(__dirname + "/public/add-driver.html");
-});
+};
 
-app.post("/34082115/Durgka/add-driver", (req, res) => {
+const postAddDriver = (req, res) => {
   const { driver_name, driver_department, driver_licence, driver_isActive } =
     req.body;
   const newDriver = new Driver(
@@ -30,15 +30,14 @@ app.post("/34082115/Durgka/add-driver", (req, res) => {
   );
   drivers.push(newDriver);
   res.redirect("/34082115/Durgka/list-drivers");
-});
+};
 
-app.get("/34082115/Durgka/delete-drivers", (req, res) => {
+const getDeleteDrivers = (req, res) => {
   res.sendFile(__dirname + "/public/delete-driver.html");
-});
+};
 
-app.get("/34082115/Durgka/delete-driver", (req, res) => {
+const getDeleteDriver = (req, res) => {
   const driverId = req.query.driver_id;
-
   const driverIndex = drivers.findIndex(
     (driver) => driver.driver_id === driverId
   );
@@ -49,21 +48,21 @@ app.get("/34082115/Durgka/delete-driver", (req, res) => {
   } else {
     res.redirect("/34082115/Durgka/invalid-data");
   }
-});
+};
 
-app.get("/34082115/Durgka/list-drivers", (req, res) => {
+const getListDrivers = (req, res) => {
   res.sendFile(__dirname + "/public/drivers-list.html");
-});
+};
 
-app.get("/34082115/Durgka/drivers-data", (req, res) => {
+const getDriversData = (req, res) => {
   res.json(drivers);
-});
+};
 
-app.get("/34082115/Durgka/add-package", (req, res) => {
+const getAddPackage = (req, res) => {
   res.sendFile(__dirname + "/public/add-package.html");
-});
+};
 
-app.post("/34082115/Durgka/add-package", (req, res) => {
+const postAddPackage = (req, res) => {
   const {
     package_title,
     package_weight,
@@ -82,17 +81,16 @@ app.post("/34082115/Durgka/add-package", (req, res) => {
   );
   packages.push(newPackage);
   res.redirect("/34082115/Durgka/list-packages");
-});
+};
 
-app.get("/34082115/Durgka/delete-packages", (req, res) => {
+const getDeletePackages = (req, res) => {
   res.sendFile(__dirname + "/public/delete-package.html");
-});
+};
 
-app.get("/34082115/Durgka/delete-package", (req, res) => {
+const getDeletePackage = (req, res) => {
   const packageId = req.query.package_id;
-
   const packageIndex = packages.findIndex(
-    (package) => package.package_id === packageId
+    (pkg) => pkg.package_id === packageId
   );
 
   if (packageIndex !== -1) {
@@ -101,24 +99,49 @@ app.get("/34082115/Durgka/delete-package", (req, res) => {
   } else {
     res.redirect("/34082115/Durgka/invalid-data");
   }
-});
+};
 
-app.get("/34082115/Durgka/list-packages", (req, res) => {
+const getListPackages = (req, res) => {
   res.sendFile(__dirname + "/public/packages-list.html");
-});
+};
 
-app.get("/34082115/Durgka/packages-data", (req, res) => {
+const getPackagesData = (req, res) => {
   res.json(packages);
-});
+};
 
-app.get("/34082115/Durgka/invalid-data", (req, res) => {
+const getInvalidData = (req, res) => {
   res.status(400).sendFile(__dirname + "/public/invalid-data.html");
-});
+};
 
-app.get("*", (req, res) => {
+const getNotFound = (req, res) => {
   res.status(404).sendFile(__dirname + "/public/404.html");
-});
+};
 
+app.get("/", getHome);
+
+app.get("/34082115/Durgka/add-driver", getAddDriver);
+app.post("/34082115/Durgka/add-driver", postAddDriver);
+
+app.get("/34082115/Durgka/delete-drivers", getDeleteDrivers);
+app.get("/34082115/Durgka/delete-driver", getDeleteDriver);
+
+app.get("/34082115/Durgka/list-drivers", getListDrivers);
+app.get("/34082115/Durgka/drivers-data", getDriversData);
+
+app.get("/34082115/Durgka/add-package", getAddPackage);
+app.post("/34082115/Durgka/add-package", postAddPackage);
+
+app.get("/34082115/Durgka/delete-packages", getDeletePackages);
+app.get("/34082115/Durgka/delete-package", getDeletePackage);
+
+app.get("/34082115/Durgka/list-packages", getListPackages);
+app.get("/34082115/Durgka/packages-data", getPackagesData);
+
+app.get("/34082115/Durgka/invalid-data", getInvalidData);
+
+app.get("*", getNotFound);
+
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
