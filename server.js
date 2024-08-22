@@ -102,7 +102,6 @@ const getDeletePackage = (req, res) => {
 };
 
 const getListPackages = (req, res) => {
-  console.log(packages);
   res.sendFile(__dirname + "/public/packages-list.html");
 };
 
