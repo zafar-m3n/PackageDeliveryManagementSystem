@@ -14,12 +14,12 @@
       </div>
       <div class="nav">
         <div class="nav-links">
-          <a href="/34082115/Durgka/add-driver">Add Driver</a>
-          <a href="/34082115/Durgka/list-drivers">List All Drivers</a>
-          <a href="/34082115/Durgka/delete-drivers">Delete Driver</a>
-          <a href="/34082115/Durgka/add-package">Add Package</a>
-          <a href="/34082115/Durgka/list-packages">List All Packages</a>
-          <a href="/34082115/Durgka/delete-packages">Delete Package</a>
+          <a href="add-driver.html">Add Driver</a>
+          <a href="drivers-list.html">List All Drivers</a>
+          <a href="delete-driver.html">Delete Driver</a>
+          <a href="add-package.html">Add Package</a>
+          <a href="packages-list.html">List All Packages</a>
+          <a href="delete-package.html">Delete Package</a>
         </div>
       </div>
     </header>
@@ -45,7 +45,7 @@
     <p><a href="/">Go back to Home</a></p>
 
     <script>
-      fetch("/34082115/Durgka/packages-data")
+      fetch("/34082115/Durgka/api/v1/packages")
         .then((response) => response.json())
         .then((data) => {
           const tableBody = document.getElementById("packages-table-body");

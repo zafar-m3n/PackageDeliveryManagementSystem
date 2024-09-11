@@ -14,22 +14,53 @@
       </div>
       <div class="nav">
         <div class="nav-links">
-          <a href="/34082115/Durgka/add-driver">Add Driver</a>
-          <a href="/34082115/Durgka/list-drivers">List All Drivers</a>
-          <a href="/34082115/Durgka/delete-drivers">Delete Driver</a>
-          <a href="/34082115/Durgka/add-package">Add Package</a>
-          <a href="/34082115/Durgka/list-packages">List All Packages</a>
-          <a href="/34082115/Durgka/delete-packages">Delete Package</a>
+          <a href="add-driver.html">Add Driver</a>
+          <a href="drivers-list.html">List All Drivers</a>
+          <a href="delete-driver.html">Delete Driver</a>
+          <a href="add-package.html">Add Package</a>
+          <a href="packages-list.html">List All Packages</a>
+          <a href="delete-package.html">Delete Package</a>
         </div>
       </div>
     </header>
+
     <div class="form-container">
       <h1>Delete Driver</h1>
-      <form action="/34082115/Durgka/delete-driver" method="GET">
+      <form id="delete-driver-form">
         <label for="driver_id">Driver ID:</label>
         <input type="text" id="driver_id" name="driver_id" required />
         <button type="submit">Delete Driver</button>
       </form>
     </div>
+
+    <script>
+      document
+        .getElementById("delete-driver-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const driverId = document.getElementById("driver_id").value;
+
+          // Send DELETE request to the correct API endpoint
+          try {
+            const response = await fetch(
+              `/34082115/Durgka/api/v1/drivers/${driverId}`,
+              {
+                method: "DELETE",
+              }
+            );
+
+            if (response.ok) {
+              alert("Driver deleted successfully.");
+            } else if (response.status === 404) {
+              alert("Driver not found.");
+            } else {
+              alert("Error deleting driver.");
+            }
+          } catch (error) {
+            console.error("Error deleting driver:", error);
+            alert("Error deleting driver.");
+          }
+        });
+    </script>
   </body>
 </html>

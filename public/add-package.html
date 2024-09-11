@@ -14,18 +14,18 @@
       </div>
       <div class="nav">
         <div class="nav-links">
-          <a href="/34082115/Durgka/add-driver">Add Driver</a>
-          <a href="/34082115/Durgka/list-drivers">List All Drivers</a>
-          <a href="/34082115/Durgka/delete-drivers">Delete Driver</a>
-          <a href="/34082115/Durgka/add-package">Add Package</a>
-          <a href="/34082115/Durgka/list-packages">List All Packages</a>
-          <a href="/34082115/Durgka/delete-packages">Delete Package</a>
+          <a href="add-driver.html">Add Driver</a>
+          <a href="drivers-list.html">List All Drivers</a>
+          <a href="delete-driver.html">Delete Driver</a>
+          <a href="add-package.html">Add Package</a>
+          <a href="packages-list.html">List All Packages</a>
+          <a href="delete-package.html">Delete Package</a>
         </div>
       </div>
     </header>
     <div class="form-container">
       <h1>Add a New Package</h1>
-      <form action="/34082115/Durgka/add-package" method="POST">
+      <form id="add-package-form">
         <div class="form-group">
           <label for="package_title">Title:</label>
           <input
@@ -99,5 +99,45 @@
         <button type="submit">Add Package</button>
       </form>
     </div>
+
+    <script>
+      document
+        .getElementById("add-package-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          // Get form data
+          const packageData = {
+            package_title: document.getElementById("package_title").value,
+            package_weight: document.getElementById("package_weight").value,
+            package_destination: document.getElementById("package_destination")
+              .value,
+            description: document.getElementById("description").value,
+            isAllocated: document.getElementById("isAllocated").checked,
+            driver_id: document.getElementById("driver_id").value,
+          };
+
+          try {
+            // Send POST request to the correct API endpoint
+            const response = await fetch("/34082115/Durgka/api/v1/packages", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(packageData),
+            });
+
+            if (response.ok) {
+              alert("Package added successfully.");
+              // Optionally, clear the form or redirect the user
+            } else {
+              alert("Error adding package.");
+            }
+          } catch (error) {
+            console.error("Error adding package:", error);
+            alert("Error adding package.");
+          }
+        });
+    </script>
   </body>
 </html>

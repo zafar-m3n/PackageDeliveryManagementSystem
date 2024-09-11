@@ -1,94 +1,125 @@
 // Importing required modules
 const express = require("express");
-const mongoose = require("mongoose");
-const Driver = require("./modules/driver.js");
-const Package = require("./modules/package.js");
+const { MongoClient } = require("mongodb");
+const ejs = require("ejs");
+const Driver = require("./models/driver.js");
+const Package = require("./models/package.js");
+
+// Configure Express
+const app = express();
+app.engine("html", ejs.renderFile);
+app.set("view engine", "html");
+app.use(express.static("public"));
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+
+// Start the server on port 8080
+app.listen(8080, () => {
+  console.log("Server running on http://localhost:8080");
+});
+
+// MongoDB connection settings
+let db;
+let driverCollection;
+let packageCollection;
+
+// Connection URL
+// const url = "mongodb://localhost:27017";
+
+const url =
+  "mongodb+srv://admin:adminPassword@cluster0.sbk4qxz.mongodb.net/InternConnect";
+const client = new MongoClient(url);
 
 // Connect to MongoDB
-mongoose.connect("mongodb://localhost:27017/package_delivery", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+async function main() {
+  await client.connect();
+  db = client.db("package_delivery");
+  driverCollection = db.collection("drivers");
+  packageCollection = db.collection("packages");
+  console.log("Connected successfully to MongoDB server.");
+}
+
+main().then(console.log).catch(console.error);
+
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/views/index.html");
 });
 
-// Check the connection status
-mongoose.connection.once("open", () => {
-  console.log("Connected to MongoDB");
-});
-
-// Initialize express app
-const app = express();
-const PORT = 8080;
-
-// In-memory storage for drivers and packages
-let drivers = [];
-let packages = [];
-
-// Middleware to serve static files and parse URL-encoded data
-app.use(express.static("public"));
-app.use(express.urlencoded({ extended: true }));
-
-// Function to serve the homepage
-const getHome = (req, res) => {
-  res.sendFile(__dirname + "/public/index.html");
-};
-
-// Function to serve the 'Add Driver' page
-const getAddDriver = (req, res) => {
-  res.sendFile(__dirname + "/public/add-driver.html");
-};
-
-// Function to handle form submission for adding a new driver
-const postAddDriver = (req, res) => {
+app.post("/34082115/Durgka/api/v1/drivers", async (req, res) => {
   const { driver_name, driver_department, driver_licence, driver_isActive } =
     req.body;
-  const newDriver = new Driver(
-    driver_name,
-    driver_department,
-    driver_licence,
-    driver_isActive === "on" // Convert checkbox value to boolean
-  );
-  drivers.push(newDriver); // Add the new driver to the drivers array
-  res.redirect("/34082115/Durgka/list-drivers"); // Redirect to the drivers list page
-};
 
-// Function to serve the 'Delete Drivers' page
-const getDeleteDrivers = (req, res) => {
-  res.sendFile(__dirname + "/public/delete-driver.html");
-};
+  try {
+    const newDriver = new Driver({
+      driver_name,
+      driver_department,
+      driver_licence,
+      driver_isActive: driver_isActive === "on",
+    });
 
-// Function to handle deleting a specific driver based on query parameter
-const getDeleteDriver = (req, res) => {
-  const driverId = req.query.driver_id; // Get driver ID from query parameter
-  const driverIndex = drivers.findIndex(
-    (driver) => driver.driver_id === driverId
-  );
+    const insertResult = await driverCollection.insertOne(newDriver);
 
-  if (driverIndex !== -1) {
-    // If driver exists
-    drivers.splice(driverIndex, 1); // Remove the driver from the array
-    res.redirect("/34082115/Durgka/list-drivers"); // Redirect to the drivers list page
-  } else {
-    res.redirect("/34082115/Durgka/invalid-data"); // Redirect to invalid data page if driver not found
+    res.status(201).json({
+      driver_id: newDriver.driver_id,
+      _id: insertResult.insertedId,
+    });
+  } catch (error) {
+    console.error("Error inserting driver:", error);
+    res.status(500).json({ message: "Error adding driver", error });
   }
-};
+});
 
-// Function to serve the 'Drivers List' page
-const getListDrivers = (req, res) => {
-  res.sendFile(__dirname + "/public/drivers-list.html");
-};
+// 2. List all Drivers (GET)
+app.get("/34082115/Durgka/api/v1/drivers", async (req, res) => {
+  try {
+    const drivers = await driverCollection.find({}).toArray();
+    res.json(drivers);
+  } catch (error) {
+    console.error("Error fetching drivers:", error);
+    res.status(500).json({ message: "Error fetching drivers", error });
+  }
+});
 
-// Function to provide drivers data in JSON format
-const getDriversData = (req, res) => {
-  res.json(drivers);
-};
+// 3. Delete Driver by ID (DELETE)
+app.delete("/34082115/Durgka/api/v1/drivers/:driver_id", async (req, res) => {
+  const { driver_id } = req.params;
 
-// Function to serve the 'Add Package' page
-const getAddPackage = (req, res) => {
-  res.sendFile(__dirname + "/public/add-package.html");
-};
+  try {
+    const deleteResult = await driverCollection.deleteOne({ driver_id });
+    if (deleteResult.deletedCount === 0) {
+      return res.status(404).json({ message: "Driver not found" });
+    }
+    res.json({ message: "Driver deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting driver:", error);
+    res.status(500).json({ message: "Error deleting driver", error });
+  }
+});
 
-// Function to handle form submission for adding a new package
-const postAddPackage = (req, res) => {
+// 4. Update driver license and department by ID (PUT)
+app.put("/34082115/Durgka/api/v1/drivers/:driver_id", async (req, res) => {
+  const { driver_id } = req.params;
+  const { driver_licence, driver_department } = req.body;
+
+  try {
+    const updateResult = await driverCollection.updateOne(
+      { driver_id },
+      { $set: { driver_licence, driver_department } }
+    );
+
+    if (updateResult.matchedCount === 0) {
+      return res.status(404).json({ message: "Driver not found" });
+    }
+
+    res.json({ message: "Driver updated successfully" });
+  } catch (error) {
+    console.error("Error updating driver:", error);
+    res.status(500).json({ message: "Error updating driver", error });
+  }
+});
+
+// 5. Insert a new Package (POST)
+app.post("/34082115/Durgka/api/v1/packages", async (req, res) => {
   const {
     package_title,
     package_weight,
@@ -97,86 +128,80 @@ const postAddPackage = (req, res) => {
     isAllocated,
     driver_id,
   } = req.body;
-  const newPackage = new Package(
-    package_title,
-    package_weight,
-    package_destination,
-    description,
-    isAllocated === "on", // Convert checkbox value to boolean
-    driver_id
-  );
-  packages.push(newPackage); // Add the new package to the packages array
-  res.redirect("/34082115/Durgka/list-packages"); // Redirect to the packages list page
-};
 
-// Function to serve the 'Delete Packages' page
-const getDeletePackages = (req, res) => {
-  res.sendFile(__dirname + "/public/delete-package.html");
-};
+  try {
+    const newPackage = new Package({
+      package_title,
+      package_weight,
+      package_destination,
+      description,
+      isAllocated: isAllocated === "on",
+      driver_id,
+    });
 
-// Function to handle deleting a specific package based on query parameter
-const getDeletePackage = (req, res) => {
-  const packageId = req.query.package_id; // Get package ID from query parameter
-  const packageIndex = packages.findIndex(
-    (pkg) => pkg.package_id === packageId
-  );
-
-  if (packageIndex !== -1) {
-    // If package exists
-    packages.splice(packageIndex, 1); // Remove the package from the array
-    res.redirect("/34082115/Durgka/list-packages"); // Redirect to the packages list page
-  } else {
-    res.redirect("/34082115/Durgka/invalid-data"); // Redirect to invalid data page if package not found
+    const insertResult = await packageCollection.insertOne(newPackage);
+    res.status(201).json(newPackage);
+  } catch (error) {
+    console.error("Error inserting package:", error);
+    res.status(500).json({ message: "Error adding package", error });
   }
-};
+});
 
-// Function to serve the 'Packages List' page
-const getListPackages = (req, res) => {
-  res.sendFile(__dirname + "/public/packages-list.html");
-};
+// 6. List all Packages (GET)
+app.get("/34082115/Durgka/api/v1/packages", async (req, res) => {
+  try {
+    const packages = await packageCollection.find({}).toArray();
+    res.json(packages);
+  } catch (error) {
+    console.error("Error fetching packages:", error);
+    res.status(500).json({ message: "Error fetching packages", error });
+  }
+});
 
-// Function to provide packages data in JSON format
-const getPackagesData = (req, res) => {
-  res.json(packages);
-};
+// 7. Delete Package by ID (DELETE)
+app.delete("/34082115/Durgka/api/v1/packages/:package_id", async (req, res) => {
+  const { package_id } = req.params;
+
+  try {
+    const deleteResult = await packageCollection.deleteOne({ package_id });
+    if (deleteResult.deletedCount === 0) {
+      return res.status(404).json({ message: "Package not found" });
+    }
+    res.json({ message: "Package deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting package:", error);
+    res.status(500).json({ message: "Error deleting package", error });
+  }
+});
+
+// 8. Update package destination by ID (PUT)
+app.put("/34082115/Durgka/api/v1/packages/:package_id", async (req, res) => {
+  const { package_id } = req.params;
+  const { package_destination } = req.body;
+
+  try {
+    const updateResult = await packageCollection.updateOne(
+      { package_id },
+      { $set: { package_destination } }
+    );
+
+    if (updateResult.matchedCount === 0) {
+      return res.status(404).json({ message: "Package not found" });
+    }
+
+    res.json({ message: "Package updated successfully" });
+  } catch (error) {
+    console.error("Error updating package:", error);
+    res.status(500).json({ message: "Error updating package", error });
+  }
+});
 
 // Function to serve the 'Invalid Data' page
-const getInvalidData = (req, res) => {
-  res.status(400).sendFile(__dirname + "/public/invalid-data.html");
-};
+app.get("/34082115/Durgka/invalid-data", (req, res) => {
+  res.status(400).sendFile(__dirname + "/invalid-data.html");
+});
 
-// Function to handle 404 errors (Not Found)
-const getNotFound = (req, res) => {
-  res.status(404).sendFile(__dirname + "/public/404.html");
-};
-
-// Route definitions for handling various HTTP GET and POST requests
-app.get("/", getHome);
-
-app.get("/34082115/Durgka/add-driver", getAddDriver);
-app.post("/34082115/Durgka/add-driver", postAddDriver);
-
-app.get("/34082115/Durgka/delete-drivers", getDeleteDrivers);
-app.get("/34082115/Durgka/delete-driver", getDeleteDriver);
-
-app.get("/34082115/Durgka/list-drivers", getListDrivers);
-app.get("/34082115/Durgka/drivers-data", getDriversData);
-
-app.get("/34082115/Durgka/add-package", getAddPackage);
-app.post("/34082115/Durgka/add-package", postAddPackage);
-
-app.get("/34082115/Durgka/delete-packages", getDeletePackages);
-app.get("/34082115/Durgka/delete-package", getDeletePackage);
-
-app.get("/34082115/Durgka/list-packages", getListPackages);
-app.get("/34082115/Durgka/packages-data", getPackagesData);
-
-app.get("/34082115/Durgka/invalid-data", getInvalidData);
-
-// Catch-all route for handling undefined routes
-app.get("*", getNotFound);
-
-// Start the server on the specified port
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+// Catch-all route for 404 errors
+app.get("/34082115/Durgka/*", (req, res) => {
+  res.status(404).sendFile(__dirname + "/404.html");
 });

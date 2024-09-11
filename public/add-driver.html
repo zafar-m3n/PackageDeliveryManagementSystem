@@ -14,18 +14,19 @@
       </div>
       <div class="nav">
         <div class="nav-links">
-          <a href="/34082115/Durgka/add-driver">Add Driver</a>
-          <a href="/34082115/Durgka/list-drivers">List All Drivers</a>
-          <a href="/34082115/Durgka/delete-drivers">Delete Driver</a>
-          <a href="/34082115/Durgka/add-package">Add Package</a>
-          <a href="/34082115/Durgka/list-packages">List All Packages</a>
-          <a href="/34082115/Durgka/delete-packages">Delete Package</a>
+          <a href="add-driver.html">Add Driver</a>
+          <a href="drivers-list.html">List All Drivers</a>
+          <a href="delete-driver.html">Delete Driver</a>
+          <a href="add-package.html">Add Package</a>
+          <a href="packages-list.html">List All Packages</a>
+          <a href="delete-package.html">Delete Package</a>
         </div>
       </div>
     </header>
+
     <div class="form-container">
       <h1>Add a New Driver</h1>
-      <form action="/34082115/Durgka/add-driver" method="POST">
+      <form id="add-driver-form">
         <div class="form-group">
           <label for="driver_name">Name:</label>
           <input
@@ -77,5 +78,43 @@
         <button type="submit">Add Driver</button>
       </form>
     </div>
+
+    <script>
+      document
+        .getElementById("add-driver-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          // Get form data
+          const driverData = {
+            driver_name: document.getElementById("driver_name").value,
+            driver_department:
+              document.getElementById("driver_department").value,
+            driver_licence: document.getElementById("driver_licence").value,
+            driver_isActive: document.getElementById("driver_isActive").checked,
+          };
+
+          try {
+            // Send POST request to the correct API endpoint
+            const response = await fetch("/34082115/Durgka/api/v1/drivers", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(driverData),
+            });
+
+            if (response.ok) {
+              alert("Driver added successfully.");
+              // Optionally, clear the form or redirect the user
+            } else {
+              alert("Error adding driver.");
+            }
+          } catch (error) {
+            console.error("Error adding driver:", error);
+            alert("Error adding driver.");
+          }
+        });
+    </script>
   </body>
 </html>
