@@ -1,7 +1,19 @@
 // Importing required modules
 const express = require("express");
+const mongoose = require("mongoose");
 const Driver = require("./modules/driver.js");
 const Package = require("./modules/package.js");
+
+// Connect to MongoDB
+mongoose.connect("mongodb://localhost:27017/package_delivery", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+// Check the connection status
+mongoose.connection.once("open", () => {
+  console.log("Connected to MongoDB");
+});
 
 // Initialize express app
 const app = express();
