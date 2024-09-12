@@ -54,14 +54,14 @@ app.post("/34082115/Durgka/api/v1/drivers", async (req, res) => {
       driver_name,
       driver_department,
       driver_licence,
-      driver_isActive: driver_isActive === "on",
+      driver_isActive,
     });
 
     const insertResult = await driverCollection.insertOne(newDriver);
 
     res.status(201).json({
+      id: insertResult.insertedId,
       driver_id: newDriver.driver_id,
-      _id: insertResult.insertedId,
     });
   } catch (error) {
     console.error("Error inserting driver:", error);
@@ -72,7 +72,8 @@ app.post("/34082115/Durgka/api/v1/drivers", async (req, res) => {
 // 2. List all Drivers (GET)
 app.get("/34082115/Durgka/api/v1/drivers", async (req, res) => {
   try {
-    const drivers = await driverCollection.find({}).toArray();
+    const drivers = await Driver.find({}).populate("assigned_packages").exec();
+
     res.json(drivers);
   } catch (error) {
     console.error("Error fetching drivers:", error);
@@ -85,46 +86,57 @@ app.delete("/34082115/Durgka/api/v1/drivers/:driver_id", async (req, res) => {
   const { driver_id } = req.params;
 
   try {
-    const deleteResult = await driverCollection.deleteOne({ driver_id });
-    if (deleteResult.deletedCount === 0) {
+    const driver = await Driver.findOne({ driver_id });
+
+    if (!driver) {
       return res.status(404).json({ message: "Driver not found" });
     }
-    res.json({ message: "Driver deleted successfully" });
+
+    const deletePackagesResult = await Package.deleteMany({
+      _id: { $in: driver.assigned_packages },
+    });
+
+    const deleteDriverResult = await Driver.deleteOne({ driver_id });
+    res.json({
+      acknowledged: true,
+      deletedCount:
+        deleteDriverResult.deletedCount + deletePackagesResult.deletedCount,
+    });
   } catch (error) {
-    console.error("Error deleting driver:", error);
-    res.status(500).json({ message: "Error deleting driver", error });
+    console.error("Error deleting driver and packages:", error);
+    res
+      .status(500)
+      .json({ message: "Error deleting driver and packages", error });
   }
 });
 
-// 4. Update driver license and department by ID (PUT)
-app.put("/34082115/Durgka/api/v1/drivers/:driver_id", async (req, res) => {
-  const { driver_id } = req.params;
-  const { driver_licence, driver_department } = req.body;
+// 4. Update driver license and department by ID (PATCH)
+app.patch("/34082115/Durgka/api/v1/drivers", async (req, res) => {
+  const { id, driver_licence, driver_department } = req.body;
 
   try {
-    const updateResult = await driverCollection.updateOne(
-      { driver_id },
+    const updateResult = await Driver.updateOne(
+      { _id: id },
       { $set: { driver_licence, driver_department } }
     );
 
     if (updateResult.matchedCount === 0) {
-      return res.status(404).json({ message: "Driver not found" });
+      return res.status(404).json({ status: "ID not found" });
     }
 
-    res.json({ message: "Driver updated successfully" });
+    res.json({ status: "Driver updated successfully" });
   } catch (error) {
     console.error("Error updating driver:", error);
-    res.status(500).json({ message: "Error updating driver", error });
+    res.status(500).json({ status: "Error updating driver", error });
   }
 });
 
 // 5. Insert a new Package (POST)
-app.post("/34082115/Durgka/api/v1/packages", async (req, res) => {
+app.post("/34082115/Durgka/api/v1/packages/add", async (req, res) => {
   const {
     package_title,
     package_weight,
     package_destination,
-    description,
     isAllocated,
     driver_id,
   } = req.body;
@@ -134,13 +146,16 @@ app.post("/34082115/Durgka/api/v1/packages", async (req, res) => {
       package_title,
       package_weight,
       package_destination,
-      description,
-      isAllocated: isAllocated === "on",
+      isAllocated,
       driver_id,
     });
 
-    const insertResult = await packageCollection.insertOne(newPackage);
-    res.status(201).json(newPackage);
+    const insertResult = await newPackage.save();
+
+    res.status(201).json({
+      id: insertResult._id,
+      package_id: newPackage.package_id,
+    });
   } catch (error) {
     console.error("Error inserting package:", error);
     res.status(500).json({ message: "Error adding package", error });
@@ -150,7 +165,8 @@ app.post("/34082115/Durgka/api/v1/packages", async (req, res) => {
 // 6. List all Packages (GET)
 app.get("/34082115/Durgka/api/v1/packages", async (req, res) => {
   try {
-    const packages = await packageCollection.find({}).toArray();
+    const packages = await Package.find({}).populate("driver_id").exec();
+
     res.json(packages);
   } catch (error) {
     console.error("Error fetching packages:", error);
@@ -163,11 +179,21 @@ app.delete("/34082115/Durgka/api/v1/packages/:package_id", async (req, res) => {
   const { package_id } = req.params;
 
   try {
-    const deleteResult = await packageCollection.deleteOne({ package_id });
+    const deleteResult = await Package.deleteOne({ package_id });
+
     if (deleteResult.deletedCount === 0) {
       return res.status(404).json({ message: "Package not found" });
     }
-    res.json({ message: "Package deleted successfully" });
+
+    await Driver.updateMany(
+      { assigned_packages: package_id },
+      { $pull: { assigned_packages: package_id } }
+    );
+
+    res.json({
+      acknowledged: true,
+      deletedCount: deleteResult.deletedCount,
+    });
   } catch (error) {
     console.error("Error deleting package:", error);
     res.status(500).json({ message: "Error deleting package", error });
@@ -175,33 +201,30 @@ app.delete("/34082115/Durgka/api/v1/packages/:package_id", async (req, res) => {
 });
 
 // 8. Update package destination by ID (PUT)
-app.put("/34082115/Durgka/api/v1/packages/:package_id", async (req, res) => {
-  const { package_id } = req.params;
-  const { package_destination } = req.body;
+app.patch("/34082115/Durgka/api/v1/packages/update", async (req, res) => {
+  const { package_id, package_destination } = req.body;
 
   try {
-    const updateResult = await packageCollection.updateOne(
+    const updateResult = await Package.updateOne(
       { package_id },
       { $set: { package_destination } }
     );
 
     if (updateResult.matchedCount === 0) {
-      return res.status(404).json({ message: "Package not found" });
+      return res.status(404).json({ status: "Package ID not found" });
     }
 
-    res.json({ message: "Package updated successfully" });
+    res.json({ status: "Package updated successfully" });
   } catch (error) {
     console.error("Error updating package:", error);
-    res.status(500).json({ message: "Error updating package", error });
+    res.status(500).json({ status: "Error updating package", error });
   }
 });
 
-// Function to serve the 'Invalid Data' page
 app.get("/34082115/Durgka/invalid-data", (req, res) => {
   res.status(400).sendFile(__dirname + "/invalid-data.html");
 });
 
-// Catch-all route for 404 errors
 app.get("/34082115/Durgka/*", (req, res) => {
   res.status(404).sendFile(__dirname + "/404.html");
 });
