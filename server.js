@@ -1,6 +1,6 @@
 // Importing required modules
 const express = require("express");
-const { MongoClient } = require("mongodb");
+const mongoose = require("mongoose");
 const ejs = require("ejs");
 const Driver = require("./models/driver.js");
 const Package = require("./models/package.js");
@@ -19,27 +19,18 @@ app.listen(8080, () => {
 });
 
 // MongoDB connection settings
-let db;
-let driverCollection;
-let packageCollection;
-
-// Connection URL
-// const url = "mongodb://localhost:27017";
-
 const url =
-  "mongodb+srv://admin:adminPassword@cluster0.sbk4qxz.mongodb.net/InternConnect";
-const client = new MongoClient(url);
+  "mongodb+srv://admin:adminPassword@cluster0.sbk4qxz.mongodb.net/package_delivery?retryWrites=true&w=majority";
 
-// Connect to MongoDB
-async function main() {
-  await client.connect();
-  db = client.db("package_delivery");
-  driverCollection = db.collection("drivers");
-  packageCollection = db.collection("packages");
-  console.log("Connected successfully to MongoDB server.");
-}
-
-main().then(console.log).catch(console.error);
+// Connect to MongoDB using Mongoose
+mongoose
+  .connect(url)
+  .then(() => {
+    console.log("Connected successfully to MongoDB server.");
+  })
+  .catch((error) => {
+    console.error("Error connecting to MongoDB:", error);
+  });
 
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/views/index.html");
